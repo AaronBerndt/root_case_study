@@ -28,6 +28,13 @@ describe("CreateDriverList", () => {
       { name: "John", trips: [] },
     ]);
   });
+
+  it("CreateNewDriver", () => {
+    expect(CreateDriverList(["Driver John"])).toStrictEqual([
+      { name: "John", trips: [] },
+    ]);
+  });
+
   it("CreateNewDriver: Throw Error", () => {
     expect(CreateNewDriver("John", [{ name: "John", trips: [] }])).toThrowError(
       "Driver John already exists."
