@@ -1,35 +1,16 @@
 import * as fs from "fs";
+import { Drivers, TripToAdd, Driver } from "./types";
 
 // function ParseDriverFile(file: string[]) {}
-
-type Driver = {
-  name: string;
-  trips: Trip[];
-};
-
-type Drivers = Driver[];
-
-type Trip = {
-  startTime: Date;
-  stopTime: Date;
-  milesDriven: number;
-};
-
-type TripToAdd = {
-  driverName: string;
-  startTime: Date;
-  stopTime: Date;
-  milesDriven: number;
-};
-
-type Trips = Trip[];
 
 export function CreateDrivingReport(drivers: Drivers) {
   return drivers;
 }
 
 export function CreateNewDriver(driverName: string, drivers: Drivers) {
-  console.log(driverName);
+  if (drivers.find(({ name }) => name === driverName)) {
+    throw new Error(`Driver ${driverName} already exists.`);
+  }
   drivers.push({ name: driverName, trips: [] });
 }
 

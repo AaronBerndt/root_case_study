@@ -28,14 +28,35 @@ describe("CreateDriverList", () => {
       { name: "John", trips: [] },
     ]);
   });
+  it("CreateNewDriver: Throw Error", () => {
+    expect(CreateNewDriver("John", [{ name: "John", trips: [] }])).toThrowError(
+      "Driver John already exists."
+    );
+  });
+
   it("AddTripToDriver", () => {
     expect(
       CreateDriverList(["Driver John", "Trip John 07:15 07:45 17.3"])
     ).toStrictEqual("");
   });
 
+  it("CreateDriverList: Driving Too Fast/Slow", () => {
+    CreateDriverList(["Trip Dan 07:15 07:45 17.3"]);
+    expect(CreateDriverList(["Trip Dan 07:15 07:45 17.3"])).toThrow(
+      "Driver Dan doesn't exist to add trip to."
+    );
+  });
+
   it("AddTripToDriver: Throw Error", () => {
     CreateDriverList(["Trip Dan 07:15 07:45 17.3"]);
-    expect(CreateDriverList(["Trip Dan 07:15 07:45 17.3"])).toThrowError("");
+    expect(CreateDriverList(["Trip Dan 07:15 07:45 17.3"])).toThrow(
+      "Driver Dan doesn't exist to add trip to."
+    );
+  });
+  it("CreateDriverList: Driving Too Fast/Slow", () => {
+    CreateDriverList(["Trip Dan 07:15 07:45 17.3"]);
+    expect(CreateDriverList(["Trip Dan 07:15 07:45 17.3"])).toThrow(
+      "Driver Dan doesn't exist to add trip to."
+    );
   });
 });
