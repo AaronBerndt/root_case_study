@@ -1,17 +1,24 @@
 import * as fs from "fs";
 import { Drivers, TripToAdd, Driver } from "./types";
+import { sumBy } from "lodash";
 
 export function CalculateMPH(time: number, miles: number) {
   return miles / time;
 }
 
 export function CreateDrivingReport(drivers: Drivers) {
-  // TODO Check Create Report
-  // TODO Loop drivers
-  // TODO For Each average out milesDriven and mph
-  // TODO `${driverName}: ${milesDrivenAvg} miles @ ${mphAvg} mph`
-  // TODO Concat the strings together into report
-  return drivers;
+  const drivingReport = drivers.map(({ name, trips }) => {
+    if (trips.length === 0) {
+      return `${name}: 0 miles`;
+    }
+
+    const milesDrivenAvg = sumBy(trips, "milesDriven") / trips.length;
+    const mphAvg = sumBy(trips, "mph") / trips.length;
+
+    return `${name}: ${milesDrivenAvg} miles @ ${mphAvg} mph`;
+  });
+
+  return drivingReport;
 }
 
 export function CreateNewDriver(driverName: string, drivers: Drivers) {
@@ -80,9 +87,9 @@ export function CreateDriverList(fileOutput: string[]): Drivers {
         throw new Error(`Trip to Add Object is invalid`);
       }
 
-      if (Math.sign(tripToAdd.milesDriven) === -1) {
-        throw new Error(`Miles driven is a negative number.`);
-      }
+      // if (Math.sign(tripToAdd?.milesDriven) === -1) {
+      //   throw new Error(`Miles driven is a negative number.`);
+      // }
 
       AddTripToDriver(tripToAdd, drivers);
     } else {

@@ -2,8 +2,23 @@ import StartProgram, {
   AddTripToDriver,
   CreateNewDriver,
   CreateDriverList,
+  CreateDrivingReport,
 } from ".";
 import { Drivers } from "./types";
+
+let drivers = [
+  {
+    name: "John",
+    trips: [{ milesDriven: 10, mph: 10 }],
+  },
+];
+
+const createTripToAdd = (driverName: string, milesDriven: number) => ({
+  driverName,
+  startTime: createDateObject("03:10"),
+  stopTime: createDateObject("03:15"),
+  milesDriven,
+});
 
 const createDateObject = (dateString: string) => {
   const today = new Date();
@@ -34,6 +49,14 @@ const createDateObject = (dateString: string) => {
 //   });
 // });
 
+describe("CreateDrivingReport", () => {
+  it("Create Report", () => {
+    expect(
+      CreateDrivingReport([...drivers, { name: "Sarah", trips: [] }])
+    ).toStrictEqual(["John: 10 miles @ 10 mph", "Sarah: 0 miles"]);
+  });
+});
+
 describe("CreateDriverList", () => {
   it("Throw Error: Driver's name missing", () => {
     expect(CreateDriverList(["Trips Dan Dan 07:45 17.3"])).toThrow(
@@ -56,20 +79,6 @@ describe("CreateDriverList", () => {
 });
 
 describe("AddTripToDriver", () => {
-  const createTripToAdd = (driverName: string, milesDriven: number) => ({
-    driverName,
-    startTime: createDateObject("03:10"),
-    stopTime: createDateObject("03:15"),
-    milesDriven,
-  });
-
-  let drivers = [
-    {
-      name: "John",
-      trips: [],
-    },
-  ];
-
   beforeEach(() => {
     drivers = [
       {
@@ -97,13 +106,12 @@ describe("AddTripToDriver", () => {
 });
 
 describe("CreateNewDriver", () => {
-  let drivers: Drivers = [];
   beforeEach(() => {
     drivers = [];
   });
 
   it("Creates new driver", () => {
-    CreateDriverList(["Driver John"]);
+    CreateNewDriver("John", drivers);
     expect(drivers).toStrictEqual([{ name: "John", trips: [] }]);
   });
 
