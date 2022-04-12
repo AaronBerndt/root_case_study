@@ -6,9 +6,8 @@ export type Driver = {
 export type Drivers = Driver[];
 
 export type Trip = {
-  startTime: Date;
-  stopTime: Date;
   milesDriven: number;
+  mph: number;
 };
 
 export type TripToAdd = {

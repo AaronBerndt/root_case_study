@@ -1,35 +1,29 @@
 import * as fs from "fs";
 import { Drivers, TripToAdd, Driver } from "./types";
 
-// function ParseDriverFile(file: string[]) {}
-
 export function CalculateMPH(time: number, miles: number) {
   return miles / time;
 }
 
 export function CreateDrivingReport(drivers: Drivers) {
   // TODO Check Create Report
+  // TODO Loop drivers
+  // TODO For Each average out milesDriven and mph
+  // TODO `${driverName}: ${milesDrivenAvg} miles @ ${mphAvg} mph`
+  // TODO Concat the strings together into report
   return drivers;
 }
 
 export function CreateNewDriver(driverName: string, drivers: Drivers) {
-  if (typeof driverName !== "string") {
-    throw new Error(`${driverName} is not a string`);
-  }
-
   if (drivers.find(({ name }) => name === driverName)) {
     throw new Error(`Driver ${driverName} already exists.`);
   }
+
   drivers.push({ name: driverName, trips: [] });
 }
 
 export function AddTripToDriver(tripToAdd: TripToAdd, drivers: Drivers) {
-  // TODO Check if Trip props before adding
-  const { driverName, ...rest } = tripToAdd;
-
-  if (typeof driverName !== "string") {
-    throw new Error(`${driverName} is not a string`);
-  }
+  const { driverName, milesDriven } = tripToAdd;
 
   const driverIndex: number = drivers.findIndex(
     ({ name }: Driver) => name === driverName
@@ -39,41 +33,60 @@ export function AddTripToDriver(tripToAdd: TripToAdd, drivers: Drivers) {
     throw new Error(`Driver ${driverName} doesn't exist to add trip to`);
   }
 
-  const mph = CalculateMPH(100, tripToAdd.milesDriven);
+  const mph = CalculateMPH(
+    tripToAdd.stopTime.getMilliseconds() -
+      tripToAdd.startTime.getMilliseconds(),
+    tripToAdd.milesDriven
+  );
 
   if (mph < 5 && mph < 100) {
-    throw new Error(`Speed`);
+    throw new Error(`MPH is too fast/slow`);
   }
 
-  return drivers[driverIndex].trips.push(rest);
+  return drivers[driverIndex].trips.push({ milesDriven, mph });
 }
 
-export function CreateDriverList(fileOutput: string[]) {
+export function CreateDriverList(fileOutput: string[]): Drivers {
   const drivers: Driver[] = [];
   // TODO Check if driver/trip values exists
 
+  const createDateObject = (dateString: string) => {
+    const today = new Date();
+    const [hours, minutes] = dateString.split(":");
+    return new Date(today.setHours(Number(hours), Number(minutes)));
+  };
+
   fileOutput.forEach((line) => {
     const lineContents: string[] = line.split(" ");
-    if (lineContents[0] === "Driver") {
+    const action = lineContents[0];
+
+    if (action === "Driver") {
       if (!lineContents[1]) {
-        throw new Error(`driver name is missing from action.`);
+        throw new Error(`Driver's name is missing from the action.`);
       }
 
       CreateNewDriver(lineContents[1], drivers);
-    } else {
-      if (!lineContents[1]) {
-        throw new Error(`driver name is missing from action.`);
+    } else if (action === "Trip") {
+      //TODO covert to Temporal
+      const tripToAdd: TripToAdd = {
+        driverName: lineContents[1],
+        startTime: createDateObject(lineContents[2]),
+        stopTime: createDateObject(lineContents[3]),
+        milesDriven: Number(lineContents[4]),
+      };
+
+      if (tripToAdd) {
+        // TODO Check if tripToAdd is proper
+        throw new Error(`Trip to Add Object is invalid`);
       }
 
-      AddTripToDriver(
-        {
-          driverName: lineContents[1],
-          startTime: new Date(lineContents[2]),
-          stopTime: new Date(lineContents[3]),
-          milesDriven: Number(lineContents[4]),
-        },
-        drivers
-      );
+      if (Math.sign(tripToAdd.milesDriven) === -1) {
+        throw new Error(`Miles driven is a negative number.`);
+      }
+
+      AddTripToDriver(tripToAdd, drivers);
+    } else {
+      throw new Error(`Invalid Command`);
     }
   });
 
@@ -89,11 +102,15 @@ export default async function StartProgram() {
 
   const inputFile = args[2];
 
+  if (inputFile !== "input.txt") {
+    throw new Error("File isn't in the proper format.");
+  }
+
   try {
-    const data = fs.readFileSync(inputFile, "utf8");
-    return data;
+    const data = fs.readFileSync(inputFile, "utf8").split("\n");
+    const driverList = CreateDriverList(data);
+    return CreateDrivingReport(driverList);
   } catch (err) {
-    console.error(err);
     throw new Error("Failed to Read input file.");
   }
 }
