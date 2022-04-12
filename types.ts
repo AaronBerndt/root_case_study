@@ -5,6 +5,12 @@ export type Driver = {
 
 export type Drivers = Driver[];
 
+export type DrivingReport = {
+  name: string;
+  milesDrivenAvg: number;
+  mphAvg: number;
+}[];
+
 export type Trip = {
   milesDriven: number;
   mph: number;

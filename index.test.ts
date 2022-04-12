@@ -3,13 +3,30 @@ import StartProgram, {
   CreateNewDriver,
   CreateDriverList,
   CreateDrivingReport,
+  PrintReport,
 } from ".";
 import { Drivers } from "./types";
 
 let drivers = [
   {
     name: "John",
-    trips: [{ milesDriven: 10, mph: 10 }],
+    trips: [
+      { milesDriven: 10, mph: 10 },
+      { milesDriven: 10, mph: 5 },
+    ],
+  },
+];
+
+const drivingReport = [
+  {
+    milesDrivenAvg: 10,
+    mphAvg: 7.5,
+    name: "John",
+  },
+  {
+    milesDrivenAvg: NaN,
+    mphAvg: NaN,
+    name: "Sarah",
   },
 ];
 
@@ -49,11 +66,19 @@ const createDateObject = (dateString: string) => {
 //   });
 // });
 
+describe("PrintReport", () => {
+  it("Report Printed", () => {
+    PrintReport(drivingReport);
+    const logSpy = jest.spyOn(console, "log");
+    expect(logSpy).toHaveBeenCalledWith("");
+  });
+});
+
 describe("CreateDrivingReport", () => {
   it("Create Report", () => {
     expect(
       CreateDrivingReport([...drivers, { name: "Sarah", trips: [] }])
-    ).toStrictEqual(["John: 10 miles @ 10 mph", "Sarah: 0 miles"]);
+    ).toStrictEqual(drivingReport);
   });
 });
 

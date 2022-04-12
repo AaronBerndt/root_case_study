@@ -1,22 +1,23 @@
 import * as fs from "fs";
-import { Drivers, TripToAdd, Driver } from "./types";
+import { Drivers, TripToAdd, Driver, DrivingReport } from "./types";
 import { sumBy } from "lodash";
 
-export function CalculateMPH(time: number, miles: number) {
-  return miles / time;
+export function PrintReport(drivingReport: DrivingReport) {
+  drivingReport.map(({ name, milesDrivenAvg, mphAvg }) => {
+    if (isNaN(milesDrivenAvg)) {
+      console.log(`${name}: 0 miles`);
+    }
+
+    console.log(`${name}: ${milesDrivenAvg} miles @ ${mphAvg} mph`);
+  });
 }
 
 export function CreateDrivingReport(drivers: Drivers) {
-  const drivingReport = drivers.map(({ name, trips }) => {
-    if (trips.length === 0) {
-      return `${name}: 0 miles`;
-    }
-
-    const milesDrivenAvg = sumBy(trips, "milesDriven") / trips.length;
-    const mphAvg = sumBy(trips, "mph") / trips.length;
-
-    return `${name}: ${milesDrivenAvg} miles @ ${mphAvg} mph`;
-  });
+  const drivingReport: DrivingReport = drivers.map(({ name, trips }) => ({
+    name,
+    milesDrivenAvg: sumBy(trips, "milesDriven") / trips.length,
+    mphAvg: sumBy(trips, "mph") / trips.length,
+  }));
 
   return drivingReport;
 }
@@ -40,11 +41,10 @@ export function AddTripToDriver(tripToAdd: TripToAdd, drivers: Drivers) {
     throw new Error(`Driver ${driverName} doesn't exist to add trip to`);
   }
 
-  const mph = CalculateMPH(
-    tripToAdd.stopTime.getMilliseconds() -
-      tripToAdd.startTime.getMilliseconds(),
-    tripToAdd.milesDriven
-  );
+  const mph =
+    tripToAdd.milesDriven /
+    (tripToAdd.stopTime.getMilliseconds() -
+      tripToAdd.startTime.getMilliseconds());
 
   if (mph < 5 && mph < 100) {
     throw new Error(`MPH is too fast/slow`);
@@ -67,33 +67,37 @@ export function CreateDriverList(fileOutput: string[]): Drivers {
     const lineContents: string[] = line.split(" ");
     const action = lineContents[0];
 
-    if (action === "Driver") {
-      if (!lineContents[1]) {
-        throw new Error(`Driver's name is missing from the action.`);
+    try {
+      if (action === "Driver") {
+        if (!lineContents[1]) {
+          throw new Error(`Driver's name is missing from the action.`);
+        }
+
+        CreateNewDriver(lineContents[1], drivers);
+      } else if (action === "Trip") {
+        //TODO covert to Temporal
+        const tripToAdd: TripToAdd = {
+          driverName: lineContents[1],
+          startTime: createDateObject(lineContents[2]),
+          stopTime: createDateObject(lineContents[3]),
+          milesDriven: Number(lineContents[4]),
+        };
+
+        if (tripToAdd) {
+          // TODO Check if tripToAdd is proper
+          throw new Error(`Trip to Add Object is invalid`);
+        }
+
+        // if (Math.sign(tripToAdd?.milesDriven) === -1) {
+        //   throw new Error(`Miles driven is a negative number.`);
+        // }
+
+        AddTripToDriver(tripToAdd, drivers);
+      } else {
+        throw new Error(`Invalid Command`);
       }
-
-      CreateNewDriver(lineContents[1], drivers);
-    } else if (action === "Trip") {
-      //TODO covert to Temporal
-      const tripToAdd: TripToAdd = {
-        driverName: lineContents[1],
-        startTime: createDateObject(lineContents[2]),
-        stopTime: createDateObject(lineContents[3]),
-        milesDriven: Number(lineContents[4]),
-      };
-
-      if (tripToAdd) {
-        // TODO Check if tripToAdd is proper
-        throw new Error(`Trip to Add Object is invalid`);
-      }
-
-      // if (Math.sign(tripToAdd?.milesDriven) === -1) {
-      //   throw new Error(`Miles driven is a negative number.`);
-      // }
-
-      AddTripToDriver(tripToAdd, drivers);
-    } else {
-      throw new Error(`Invalid Command`);
+    } catch (ex) {
+      console.error(ex);
     }
   });
 
@@ -116,8 +120,9 @@ export default async function StartProgram() {
   try {
     const data = fs.readFileSync(inputFile, "utf8").split("\n");
     const driverList = CreateDriverList(data);
-    return CreateDrivingReport(driverList);
-  } catch (err) {
-    throw new Error("Failed to Read input file.");
+    const drivingReport = CreateDrivingReport(driverList);
+    PrintReport(drivingReport);
+  } catch (ex) {
+    console.error(ex);
   }
 }
