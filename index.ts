@@ -2,6 +2,13 @@ import * as fs from "fs";
 import { Drivers, TripToAdd, Driver, DrivingReport } from "./types";
 import { orderBy, sumBy } from "lodash";
 
+export const createDateObject = (dateString: string) => {
+  console.log(dateString);
+  const today = new Date();
+  const [hours, minutes] = dateString.split(":");
+  return new Date(today.setHours(Number(hours), Number(minutes)));
+};
+
 export function PrintReport(drivingReport: DrivingReport) {
   orderBy(drivingReport, ["milesDrivenAvg"], ["desc"]).map(
     ({ name, milesDrivenAvg, mphAvg }) => {
@@ -34,7 +41,7 @@ export function CreateNewDriver(driverName: string, drivers: Drivers) {
 }
 
 export function AddTripToDriver(tripToAdd: TripToAdd, drivers: Drivers) {
-  const { driverName, milesDriven } = tripToAdd;
+  const { driverName, milesDriven, stopTime, startTime } = tripToAdd;
 
   const driverIndex: number = drivers.findIndex(
     ({ name }: Driver) => name === driverName
@@ -44,10 +51,9 @@ export function AddTripToDriver(tripToAdd: TripToAdd, drivers: Drivers) {
     throw new Error(`Driver ${driverName} doesn't exist to add trip to.`);
   }
 
-  const mph =
-    tripToAdd.milesDriven /
-    (tripToAdd.stopTime.getMilliseconds() -
-      tripToAdd.startTime.getMilliseconds());
+  const timeDifference = stopTime.getTime() - startTime.getTime();
+
+  const mph = milesDriven / (timeDifference / 1000 / 60 / 60);
 
   if (mph > 5 || mph > 100) {
     return drivers[driverIndex].trips.push({ milesDriven, mph });
@@ -57,54 +63,46 @@ export function AddTripToDriver(tripToAdd: TripToAdd, drivers: Drivers) {
 export function CreateDriverList(fileOutput: string[]): Drivers {
   const drivers: Driver[] = [];
 
-  const createDateObject = (dateString: string) => {
-    const today = new Date();
-    const [hours, minutes] = dateString.split(":");
-    return new Date(today.setHours(Number(hours), Number(minutes)));
-  };
-
   fileOutput.forEach((line) => {
     const lineContents: string[] = line.split(" ");
+
     const action = lineContents[0];
     const driverName = lineContents[1];
-    const startTime = createDateObject(lineContents[2]);
-    const stopTime = createDateObject(lineContents[3]);
-    const milesDriven = Number(lineContents[4]);
 
-    try {
-      if (action === "Driver") {
-        if (typeof driverName !== "string") {
-          throw new Error(`Driver ${driverName} name is invalid.`);
-        }
-
-        CreateNewDriver(driverName, drivers);
-      } else if (action === "Trip") {
-        const tripToAdd: TripToAdd = {
-          driverName,
-          startTime,
-          stopTime,
-          milesDriven,
-        };
-
-        if (
-          typeof driverName !== "string" ||
-          startTime.toString() === "Invalid Date" ||
-          stopTime.toString() === "Invalid Date" ||
-          typeof milesDriven !== "number"
-        ) {
-          throw new Error(`Trip to Add Object is invalid.`);
-        }
-
-        if (Math.sign(milesDriven) === -1) {
-          throw new Error(`Miles driven is a negative number.`);
-        }
-
-        AddTripToDriver(tripToAdd, drivers);
-      } else {
-        throw new Error(`Invalid Command`);
+    if (action === "Driver") {
+      if (!/^[a-zA-Z]+$/.test(driverName)) {
+        throw new Error(`Driver ${driverName} name is invalid.`);
       }
-    } catch (error) {
-      throw error;
+
+      return CreateNewDriver(driverName, drivers);
+    } else if (action === "Trip") {
+      const startTime = createDateObject(lineContents[2]);
+      const stopTime = createDateObject(lineContents[3]);
+      const milesDriven = Number(lineContents[4]);
+
+      const tripToAdd: TripToAdd = {
+        driverName,
+        startTime,
+        stopTime,
+        milesDriven,
+      };
+
+      if (
+        !/^[a-zA-Z]+$/.test(driverName) ||
+        startTime.toString() === "Invalid Date" ||
+        stopTime.toString() === "Invalid Date" ||
+        typeof milesDriven !== "number"
+      ) {
+        throw new Error(`Trip to Add Object is invalid.`);
+      }
+
+      if (Math.sign(milesDriven) === -1) {
+        throw new Error(`Miles driven is a negative number.`);
+      }
+
+      return AddTripToDriver(tripToAdd, drivers);
+    } else {
+      throw new Error(`Invalid Command`);
     }
   });
 
@@ -126,10 +124,20 @@ export function StartProgram() {
 
   try {
     const data = fs.readFileSync(inputFile, "utf8").split("\n");
+
+    if (data.length === 0) {
+      throw new Error(`Input file is empty`);
+    }
     const driverList = CreateDriverList(data);
+
+    if (driverList.length === 0) {
+      throw new Error(`No drivers to make report`);
+    }
+
     const drivingReport = CreateDrivingReport(driverList);
     PrintReport(drivingReport);
   } catch (error) {
+    console.log(error);
     throw error;
   }
 }

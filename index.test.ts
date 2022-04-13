@@ -8,6 +8,15 @@ import {
 } from ".";
 import { Drivers } from "./types";
 
+const inputFileContents = [
+  "Driver Dan",
+  "Driver Lauren",
+  "Driver Kumi",
+  "Trip Dan 07:15 07:45 17.3",
+  "Trip Dan 06:12 06:32 21.8",
+  "Trip Lauren 12:01 13:16 42.0",
+];
+
 let drivers: Drivers = [
   {
     name: "John",
@@ -44,28 +53,34 @@ const createDateObject = (dateString: string) => {
   return new Date(today.setHours(Number(hours), Number(minutes)));
 };
 
-// describe("End to End", () => {
-//   it("Should Create Report", () => {
-//     process.argv = ["", "", "input.txt"];
+describe("End to End", () => {
+  it("Should Print Report", () => {
+    global.console.log = jest.fn();
+    process.argv = ["", "", "input.txt"];
 
-//     expect(StartProgram).toBe("");
-//   });
+    StartProgram();
+    expect(global.console.log).toHaveBeenCalledTimes(drivingReport.length);
+  });
 
-//   it("Throw Error: No Input File", () => {
-//     process.argv = ["", ""];
-//     expect(StartProgram).toThrowError();
-//   });
+  it("Throw Error: No Input File", () => {
+    process.argv = ["", ""];
+    expect(StartProgram).toThrow("No input file detected");
+  });
+  it("Throw Error: File isn't a input file", () => {
+    process.argv = ["", "", "test.txt"];
+    expect(StartProgram).toThrow("File isn't in the proper format.");
+  });
 
-//   it("Throw Error: Failed to Read input file", () => {
-//     process.argv = ["", ""];
-//     expect(StartProgram).toThrowError();
-//   });
+  it("Throw Error: input file is empty", () => {
+    process.argv = ["", "", "input.txt"];
+    expect(StartProgram).toThrow("No input file detected");
+  });
 
-//   it("Throw Error: File isn't a input file", () => {
-//     process.argv = ["", ""];
-//     expect(StartProgram).toThrowError();
-//   });
-// });
+  it("Throw Error: Driver list is empty", () => {
+    process.argv = ["", ""];
+    expect(StartProgram).toThrow("No input file detected");
+  });
+});
 
 describe("PrintReport", () => {
   it("Report Printed", () => {
@@ -86,6 +101,20 @@ describe("CreateDrivingReport", () => {
 });
 
 describe("CreateDriverList", () => {
+  it("Create Driver List", () => {
+    expect(CreateDriverList(inputFileContents)).toStrictEqual([
+      {
+        name: "Dan",
+        trips: [
+          { milesDriven: 17.3, mph: 34.59998077778846 },
+          { milesDriven: 21.8, mph: 65.4 },
+        ],
+      },
+      { name: "Lauren", trips: [{ milesDriven: 42, mph: 33.6 }] },
+      { name: "Kumi", trips: [] },
+    ]);
+  });
+
   it("Throw Error: Invalid Command", () => {
     expect(() => CreateDriverList(["Trips Dan Dan 07:45 17.3"])).toThrow(
       "Invalid Command"
