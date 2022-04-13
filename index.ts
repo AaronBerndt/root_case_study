@@ -3,7 +3,7 @@ import { Drivers, TripToAdd, Driver, DrivingReport } from "./types";
 import { orderBy, sumBy } from "lodash";
 
 export const createDateObject = (dateString: string) => {
-  console.log(dateString);
+  // TODO Have dates be static
   const today = new Date();
   const [hours, minutes] = dateString.split(":");
   return new Date(today.setHours(Number(hours), Number(minutes)));

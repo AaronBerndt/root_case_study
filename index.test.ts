@@ -54,8 +54,9 @@ const createDateObject = (dateString: string) => {
 };
 
 describe("End to End", () => {
+  // TODO Mock FS for tests
   it("Should Print Report", () => {
-    global.console.log = jest.fn();
+    // global.console.log = jest.fn();
     process.argv = ["", "", "input.txt"];
 
     StartProgram();
@@ -68,6 +69,7 @@ describe("End to End", () => {
   });
   it("Throw Error: File isn't a input file", () => {
     process.argv = ["", "", "test.txt"];
+
     expect(StartProgram).toThrow("File isn't in the proper format.");
   });
 
