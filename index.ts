@@ -6,9 +6,9 @@ export function PrintReport(drivingReport: DrivingReport) {
   drivingReport.map(({ name, milesDrivenAvg, mphAvg }) => {
     if (isNaN(milesDrivenAvg)) {
       console.log(`${name}: 0 miles`);
+    } else {
+      console.log(`${name}: ${milesDrivenAvg} miles @ ${mphAvg} mph`);
     }
-
-    console.log(`${name}: ${milesDrivenAvg} miles @ ${mphAvg} mph`);
   });
 }
 
@@ -38,7 +38,7 @@ export function AddTripToDriver(tripToAdd: TripToAdd, drivers: Drivers) {
   );
 
   if (driverIndex === -1) {
-    throw new Error(`Driver ${driverName} doesn't exist to add trip to`);
+    throw new Error(`Driver ${driverName} doesn't exist to add trip to.`);
   }
 
   const mph =
@@ -46,16 +46,13 @@ export function AddTripToDriver(tripToAdd: TripToAdd, drivers: Drivers) {
     (tripToAdd.stopTime.getMilliseconds() -
       tripToAdd.startTime.getMilliseconds());
 
-  if (mph < 5 && mph < 100) {
-    throw new Error(`MPH is too fast/slow`);
+  if (mph > 5 || mph > 100) {
+    return drivers[driverIndex].trips.push({ milesDriven, mph });
   }
-
-  return drivers[driverIndex].trips.push({ milesDriven, mph });
 }
 
 export function CreateDriverList(fileOutput: string[]): Drivers {
   const drivers: Driver[] = [];
-  // TODO Check if driver/trip values exists
 
   const createDateObject = (dateString: string) => {
     const today = new Date();
@@ -66,38 +63,45 @@ export function CreateDriverList(fileOutput: string[]): Drivers {
   fileOutput.forEach((line) => {
     const lineContents: string[] = line.split(" ");
     const action = lineContents[0];
+    const driverName = lineContents[1];
+    const startTime = createDateObject(lineContents[2]);
+    const stopTime = createDateObject(lineContents[3]);
+    const milesDriven = Number(lineContents[4]);
 
     try {
       if (action === "Driver") {
-        if (!lineContents[1]) {
-          throw new Error(`Driver's name is missing from the action.`);
+        if (typeof driverName !== "string") {
+          throw new Error(`Driver ${driverName} name is invalid.`);
         }
 
-        CreateNewDriver(lineContents[1], drivers);
+        CreateNewDriver(driverName, drivers);
       } else if (action === "Trip") {
-        //TODO covert to Temporal
         const tripToAdd: TripToAdd = {
-          driverName: lineContents[1],
-          startTime: createDateObject(lineContents[2]),
-          stopTime: createDateObject(lineContents[3]),
-          milesDriven: Number(lineContents[4]),
+          driverName,
+          startTime,
+          stopTime,
+          milesDriven,
         };
 
-        if (tripToAdd) {
-          // TODO Check if tripToAdd is proper
-          throw new Error(`Trip to Add Object is invalid`);
+        if (
+          typeof driverName !== "string" ||
+          startTime.toString() === "Invalid Date" ||
+          stopTime.toString() === "Invalid Date" ||
+          typeof milesDriven !== "number"
+        ) {
+          throw new Error(`Trip to Add Object is invalid.`);
         }
 
-        // if (Math.sign(tripToAdd?.milesDriven) === -1) {
-        //   throw new Error(`Miles driven is a negative number.`);
-        // }
+        if (Math.sign(milesDriven) === -1) {
+          throw new Error(`Miles driven is a negative number.`);
+        }
 
         AddTripToDriver(tripToAdd, drivers);
       } else {
         throw new Error(`Invalid Command`);
       }
-    } catch (ex) {
-      console.error(ex);
+    } catch (error) {
+      throw error;
     }
   });
 
@@ -122,7 +126,7 @@ export default async function StartProgram() {
     const driverList = CreateDriverList(data);
     const drivingReport = CreateDrivingReport(driverList);
     PrintReport(drivingReport);
-  } catch (ex) {
-    console.error(ex);
+  } catch (error) {
+    throw error;
   }
 }

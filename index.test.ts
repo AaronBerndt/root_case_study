@@ -7,7 +7,7 @@ import StartProgram, {
 } from ".";
 import { Drivers } from "./types";
 
-let drivers = [
+let drivers: Drivers = [
   {
     name: "John",
     trips: [
@@ -69,8 +69,9 @@ const createDateObject = (dateString: string) => {
 describe("PrintReport", () => {
   it("Report Printed", () => {
     PrintReport(drivingReport);
-    const logSpy = jest.spyOn(console, "log");
-    expect(logSpy).toHaveBeenCalledWith("");
+    console.log = jest.fn();
+
+    expect(console.log).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -83,22 +84,22 @@ describe("CreateDrivingReport", () => {
 });
 
 describe("CreateDriverList", () => {
-  it("Throw Error: Driver's name missing", () => {
-    expect(CreateDriverList(["Trips Dan Dan 07:45 17.3"])).toThrow(
+  it("Throw Error: Invalid Command", () => {
+    expect(() => CreateDriverList(["Trips Dan Dan 07:45 17.3"])).toThrow(
       "Invalid Command"
     );
   });
   it("Throw Error: Driver's name missing", () => {
-    expect(CreateDriverList(["Driver "])).toThrow("");
+    expect(() => CreateDriverList(["Driver "])).toThrow("");
   });
-  it("Throw Error: TripToAdd is wrong", () => {
-    expect(CreateDriverList(["Trip Dan Dan 07:45 17.3"])).toThrow(
-      "TripToAdd is wrong"
+  it("Throw Error: TripToAdd object is invalid", () => {
+    expect(() => CreateDriverList(["Trip Dan Dan 07:45 17.3"])).toThrow(
+      "Trip to Add Object is invalid."
     );
   });
   it("Throw Error: milesDriven is negative", () => {
-    expect(CreateDriverList(["Trip Dan 07:30 07:45 -1"])).toThrow(
-      "TripToAdd is wrong"
+    expect(() => CreateDriverList(["Trip Dan 07:30 07:45 -1"])).toThrow(
+      "Miles driven is a negative number."
     );
   });
 });
@@ -119,12 +120,7 @@ describe("AddTripToDriver", () => {
   });
 
   it("Throw Error: Driver doesn't exist", () => {
-    expect(AddTripToDriver(createTripToAdd("Dan", 17), drivers)).toThrow(
-      "Driver Dan doesn't exist to add trip to."
-    );
-  });
-  it("Throw Error: Driving Too Fast/Slow", () => {
-    expect(AddTripToDriver(createTripToAdd("John", 17), drivers)).toThrow(
+    expect(() => AddTripToDriver(createTripToAdd("Dan", 17), drivers)).toThrow(
       "Driver Dan doesn't exist to add trip to."
     );
   });
@@ -148,7 +144,7 @@ describe("CreateNewDriver", () => {
       },
     ];
 
-    expect(CreateNewDriver("John", drivers)).toThrowError(
+    expect(() => CreateNewDriver("John", drivers)).toThrow(
       "Driver John already exists."
     );
   });
