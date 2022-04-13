@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import {
   StartProgram,
   AddTripToDriver,
@@ -50,7 +51,7 @@ const createTripToAdd = (driverName: string, milesDriven: number) => ({
 const createDateObject = (dateString: string) => {
   const today = new Date();
   const [hours, minutes] = dateString.split(":");
-  return new Date(today.setHours(Number(hours), Number(minutes)));
+  return new Date(today.setHours(Number(hours), Number(minutes), 0, 0));
 };
 
 describe("End to End", () => {
@@ -108,7 +109,7 @@ describe("CreateDriverList", () => {
       {
         name: "Dan",
         trips: [
-          { milesDriven: 17.3, mph: 34.59998077778846 },
+          { milesDriven: 17.3, mph: 34.6 },
           { milesDriven: 21.8, mph: 65.4 },
         ],
       },

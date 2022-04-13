@@ -1,12 +1,11 @@
-import * as fs from "fs";
+import { readFileSync } from "fs";
 import { Drivers, TripToAdd, Driver, DrivingReport } from "./types";
 import { orderBy, sumBy } from "lodash";
 
 export const createDateObject = (dateString: string) => {
-  // TODO Have dates be static
   const today = new Date();
   const [hours, minutes] = dateString.split(":");
-  return new Date(today.setHours(Number(hours), Number(minutes)));
+  return new Date(today.setHours(Number(hours), Number(minutes), 0, 0));
 };
 
 export function PrintReport(drivingReport: DrivingReport) {
@@ -123,7 +122,7 @@ export function StartProgram() {
   }
 
   try {
-    const data = fs.readFileSync(inputFile, "utf8").split("\n");
+    const data = readFileSync(inputFile, "utf8").split("\n");
 
     if (data.length === 0) {
       throw new Error(`Input file is empty`);
