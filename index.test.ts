@@ -1,4 +1,5 @@
-import StartProgram, {
+import {
+  StartProgram,
   AddTripToDriver,
   CreateNewDriver,
   CreateDriverList,
@@ -24,8 +25,8 @@ const drivingReport = [
     name: "John",
   },
   {
-    milesDrivenAvg: NaN,
-    mphAvg: NaN,
+    milesDrivenAvg: 0,
+    mphAvg: 0,
     name: "Sarah",
   },
 ];
@@ -68,10 +69,11 @@ const createDateObject = (dateString: string) => {
 
 describe("PrintReport", () => {
   it("Report Printed", () => {
-    PrintReport(drivingReport);
-    console.log = jest.fn();
+    global.console.log = jest.fn();
 
-    expect(console.log).toHaveBeenCalledTimes(2);
+    PrintReport(drivingReport);
+
+    expect(global.console.log).toHaveBeenCalledTimes(drivingReport.length);
   });
 });
 

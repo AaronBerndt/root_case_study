@@ -1,22 +1,25 @@
 import * as fs from "fs";
 import { Drivers, TripToAdd, Driver, DrivingReport } from "./types";
-import { sumBy } from "lodash";
+import { orderBy, sumBy } from "lodash";
 
 export function PrintReport(drivingReport: DrivingReport) {
-  drivingReport.map(({ name, milesDrivenAvg, mphAvg }) => {
-    if (isNaN(milesDrivenAvg)) {
-      console.log(`${name}: 0 miles`);
-    } else {
-      console.log(`${name}: ${milesDrivenAvg} miles @ ${mphAvg} mph`);
+  orderBy(drivingReport, ["milesDrivenAvg"], ["desc"]).map(
+    ({ name, milesDrivenAvg, mphAvg }) => {
+      if (milesDrivenAvg === 0) {
+        console.log(`${name}: 0 miles`);
+      } else {
+        console.log(`${name}: ${milesDrivenAvg} miles @ ${mphAvg} mph`);
+      }
     }
-  });
+  );
 }
 
 export function CreateDrivingReport(drivers: Drivers) {
   const drivingReport: DrivingReport = drivers.map(({ name, trips }) => ({
     name,
-    milesDrivenAvg: sumBy(trips, "milesDriven") / trips.length,
-    mphAvg: sumBy(trips, "mph") / trips.length,
+    milesDrivenAvg:
+      trips.length === 0 ? 0 : sumBy(trips, "milesDriven") / trips.length,
+    mphAvg: trips.length === 0 ? 0 : sumBy(trips, "mph") / trips.length,
   }));
 
   return drivingReport;
@@ -108,7 +111,7 @@ export function CreateDriverList(fileOutput: string[]): Drivers {
   return drivers;
 }
 
-export default async function StartProgram() {
+export function StartProgram() {
   const args = process.argv;
 
   if (!args[2]) {
