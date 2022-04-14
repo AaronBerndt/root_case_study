@@ -8,6 +8,9 @@ import {
   PrintReport,
 } from ".";
 import { Drivers } from "./types";
+jest.mock("fs");
+
+const mockedReadFileSync = jest.mocked(fs.readFileSync, true);
 
 const inputFileContents = [
   "Driver Dan",
@@ -55,13 +58,20 @@ const createDateObject = (dateString: string) => {
 };
 
 describe("End to End", () => {
-  // TODO Mock FS for tests
+  afterEach(() => jest.clearAllMocks());
   it("Should Print Report", () => {
-    // global.console.log = jest.fn();
+    const consoleSpy = jest.spyOn(console, "log");
     process.argv = ["", "", "input.txt"];
+    mockedReadFileSync.mockReturnValue(`Driver Dan
+Driver Lauren
+Driver Kumi
+Trip Dan 07:15 07:45 17.3
+Trip Dan 06:12 06:32 21.8
+Trip Lauren 12:01 13:16 42.0
+`);
 
     StartProgram();
-    expect(global.console.log).toHaveBeenCalledTimes(drivingReport.length);
+    expect(consoleSpy).toHaveBeenCalledTimes(3);
   });
 
   it("Throw Error: No Input File", () => {
@@ -76,22 +86,18 @@ describe("End to End", () => {
 
   it("Throw Error: input file is empty", () => {
     process.argv = ["", "", "input.txt"];
-    expect(StartProgram).toThrow("No input file detected");
-  });
-
-  it("Throw Error: Driver list is empty", () => {
-    process.argv = ["", ""];
-    expect(StartProgram).toThrow("No input file detected");
+    mockedReadFileSync.mockReturnValue("");
+    expect(StartProgram).toThrow("Input file is empty.");
   });
 });
 
 describe("PrintReport", () => {
   it("Report Printed", () => {
-    global.console.log = jest.fn();
+    const consoleSpy = jest.spyOn(console, "log");
 
     PrintReport(drivingReport);
 
-    expect(global.console.log).toHaveBeenCalledTimes(drivingReport.length);
+    expect(consoleSpy).toHaveBeenCalledTimes(drivingReport.length);
   });
 });
 

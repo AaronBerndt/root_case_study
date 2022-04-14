@@ -68,6 +68,10 @@ export function CreateDriverList(fileOutput: string[]): Drivers {
     const action = lineContents[0];
     const driverName = lineContents[1];
 
+    if (action !== "Driver" && action !== "Trip") {
+      throw new Error(`Invalid Command`);
+    }
+
     if (action === "Driver") {
       if (!/^[a-zA-Z]+$/.test(driverName)) {
         throw new Error(`Driver ${driverName} name is invalid.`);
@@ -100,8 +104,6 @@ export function CreateDriverList(fileOutput: string[]): Drivers {
       }
 
       return AddTripToDriver(tripToAdd, drivers);
-    } else {
-      throw new Error(`Invalid Command`);
     }
   });
 
@@ -122,17 +124,15 @@ export function StartProgram() {
   }
 
   try {
-    const data = readFileSync(inputFile, "utf8").split("\n");
+    const data = readFileSync(inputFile, "utf8")
+      .split("\n")
+      .filter((line) => line !== "");
 
     if (data.length === 0) {
-      throw new Error(`Input file is empty`);
+      throw new Error(`Input file is empty.`);
     }
+
     const driverList = CreateDriverList(data);
-
-    if (driverList.length === 0) {
-      throw new Error(`No drivers to make report`);
-    }
-
     const drivingReport = CreateDrivingReport(driverList);
     PrintReport(drivingReport);
   } catch (error) {
