@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { Drivers, TripToAdd, Driver, DrivingReport } from "./types";
-import { orderBy, sumBy } from "lodash";
+import { orderBy, round, sumBy } from "lodash";
 
 export const createDateObject = (dateString: string) => {
   const today = new Date();
@@ -24,8 +24,10 @@ export function CreateDrivingReport(drivers: Drivers) {
   const drivingReport: DrivingReport = drivers.map(({ name, trips }) => ({
     name,
     milesDrivenAvg:
-      trips.length === 0 ? 0 : sumBy(trips, "milesDriven") / trips.length,
-    mphAvg: trips.length === 0 ? 0 : sumBy(trips, "mph") / trips.length,
+      trips.length === 0
+        ? 0
+        : round(sumBy(trips, "milesDriven") / trips.length),
+    mphAvg: trips.length === 0 ? 0 : round(sumBy(trips, "mph") / trips.length),
   }));
 
   return drivingReport;

@@ -34,7 +34,7 @@ let drivers: Drivers = [
 const drivingReport = [
   {
     milesDrivenAvg: 10,
-    mphAvg: 7.5,
+    mphAvg: 8,
     name: "John",
   },
   {
