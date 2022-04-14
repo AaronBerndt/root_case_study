@@ -2,17 +2,17 @@
   "name": "root-project",
   "version": "1.0.0",
   "description": "Case study",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
+    "run-program": "EXECUTE_PROGRAM=true ts-node index.ts",
     "test": "jest"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "jest": "^27.5.1",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "ts-node": "^10.7.0"
   },
   "devDependencies": {
+    "jest": "^27.5.1",
     "@types/jest": "^27.4.1",
     "@types/lodash": "^4.14.181",
     "ts-jest": "^27.1.4",

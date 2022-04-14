@@ -1,6 +1,5 @@
 import * as fs from "fs";
-import {
-  StartProgram,
+import StartProgram, {
   AddTripToDriver,
   CreateNewDriver,
   CreateDriverList,

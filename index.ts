@@ -112,7 +112,7 @@ export function CreateDriverList(fileOutput: string[]): Drivers {
   return drivers;
 }
 
-export function StartProgram() {
+export default function StartProgram() {
   const args = process.argv;
 
   if (!args[2]) {
@@ -141,4 +141,8 @@ export function StartProgram() {
     console.log(error);
     throw error;
   }
+}
+
+if (process.env.EXECUTE_PROGRAM) {
+  StartProgram();
 }
