@@ -5,6 +5,7 @@ import StartProgram, {
   CreateDriverList,
   CreateDrivingReport,
   PrintReport,
+  createDateObject,
 } from ".";
 import { Drivers } from "./types";
 jest.mock("fs");
@@ -49,12 +50,6 @@ const createTripToAdd = (driverName: string, milesDriven: number) => ({
   stopTime: createDateObject("03:15"),
   milesDriven,
 });
-
-const createDateObject = (dateString: string) => {
-  const today = new Date();
-  const [hours, minutes] = dateString.split(":");
-  return new Date(today.setHours(Number(hours), Number(minutes), 0, 0));
-};
 
 describe("End to End", () => {
   afterEach(() => jest.clearAllMocks());
