@@ -4,8 +4,9 @@ import StartProgram, {
   CreateNewDriver,
   CreateDriverList,
   CreateDrivingReport,
-  PrintReport,
+  CreatePrintReportMessage,
   createDateObject,
+  PrintReport,
 } from ".";
 import { Drivers } from "./types";
 jest.mock("fs");
@@ -25,29 +26,34 @@ let drivers: Drivers = [
   {
     name: "John",
     trips: [
-      { milesDriven: 10, mph: 10 },
-      { milesDriven: 10, mph: 5 },
+      { milesDriven: 10, mph: 10, onHighway: false },
+      { milesDriven: 10, mph: 5, onHighway: false },
     ],
+    invalidTripCount: 0,
   },
 ];
 
-const drivingReport = [
+const drivingReports = [
   {
-    milesDrivenAvg: 10,
+    milesDriven: 20,
+    milesDrivenOnHighway: 0,
     mphAvg: 8,
+    invalidTripCount: 0,
     name: "John",
   },
   {
-    milesDrivenAvg: 0,
+    milesDriven: 0,
+    milesDrivenOnHighway: 0,
     mphAvg: 0,
+    invalidTripCount: 0,
     name: "Sarah",
   },
 ];
 
 const createTripToAdd = (driverName: string, milesDriven: number) => ({
   driverName,
-  startTime: createDateObject("03:10"),
-  stopTime: createDateObject("03:15"),
+  startTime: createDateObject("04:00"),
+  stopTime: createDateObject("05:00"),
   milesDriven,
 });
 
@@ -55,7 +61,7 @@ describe("End to End", () => {
   afterEach(() => jest.clearAllMocks());
   it("Should Print Report", () => {
     const consoleSpy = jest.spyOn(console, "log");
-    process.argv = ["", "", "input.txt"];
+    process.argv = ["", "", "input.txt", "false"];
     mockedReadFileSync.mockReturnValue(`Driver Dan
 Driver Lauren
 Driver Kumi
@@ -85,21 +91,39 @@ Trip Lauren 12:01 13:16 42.0
   });
 });
 
+describe("CreatePrintReportMessage", () => {
+  it("Report is invalid driving report", () => {
+    const reportContent = CreatePrintReportMessage(drivingReports[0], false);
+
+    expect(reportContent).toBe("John: 20 miles driven @ 8 mph Invalid trips 0");
+  });
+  it("Report is highway report", () => {
+    const reportContent = CreatePrintReportMessage(drivingReports[0], true);
+
+    expect(reportContent).toBe(
+      "John: 20 miles driven @ 8 mph percent on highway 0%"
+    );
+  });
+});
+
 describe("PrintReport", () => {
   it("Report Printed", () => {
     const consoleSpy = jest.spyOn(console, "log");
 
-    PrintReport(drivingReport);
+    PrintReport(drivingReports, false);
 
-    expect(consoleSpy).toHaveBeenCalledTimes(drivingReport.length);
+    expect(consoleSpy).toHaveBeenCalledTimes(drivingReports.length);
   });
 });
 
 describe("CreateDrivingReport", () => {
   it("Create Report", () => {
     expect(
-      CreateDrivingReport([...drivers, { name: "Sarah", trips: [] }])
-    ).toStrictEqual(drivingReport);
+      CreateDrivingReport([
+        ...drivers,
+        { name: "Sarah", trips: [], invalidTripCount: 0 },
+      ])
+    ).toStrictEqual(drivingReports);
   });
 });
 
@@ -109,12 +133,21 @@ describe("CreateDriverList", () => {
       {
         name: "Dan",
         trips: [
-          { milesDriven: 17.3, mph: 34.6 },
-          { milesDriven: 21.8, mph: 65.4 },
+          { milesDriven: 17.3, mph: 34.6, onHighway: false },
+          { milesDriven: 21.8, mph: 65.4, onHighway: true },
         ],
+        invalidTripCount: 0,
       },
-      { name: "Lauren", trips: [{ milesDriven: 42, mph: 33.6 }] },
-      { name: "Kumi", trips: [] },
+      {
+        name: "Lauren",
+        trips: [{ milesDriven: 42, mph: 33.6, onHighway: false }],
+        invalidTripCount: 0,
+      },
+      {
+        name: "Kumi",
+        trips: [],
+        invalidTripCount: 0,
+      },
     ]);
   });
 
@@ -144,13 +177,28 @@ describe("AddTripToDriver", () => {
       {
         name: "John",
         trips: [],
+        invalidTripCount: 0,
       },
     ];
   });
 
-  it("Add trip to driver", () => {
-    AddTripToDriver(createTripToAdd("John", 17), drivers);
+  it("Add trip to driver: Not on Highway", () => {
+    AddTripToDriver(createTripToAdd("John", 10), drivers);
     expect(drivers[0].trips).toHaveLength(1);
+    console.log(drivers[0].trips[0].onHighway);
+    expect(drivers[0].trips[0].onHighway).toBeFalsy();
+  });
+
+  it("Add trip to driver: On Highway", () => {
+    AddTripToDriver(createTripToAdd("John", 50), drivers);
+    expect(drivers[0].trips).toHaveLength(1);
+    expect(drivers[0].trips[0].onHighway).toBeTruthy();
+  });
+
+  it("Add trip to driver: Increase Invalid Count", () => {
+    AddTripToDriver(createTripToAdd("John", 1), drivers);
+    expect(drivers[0].trips).toHaveLength(0);
+    expect(drivers[0].invalidTripCount).toBe(1);
   });
 
   it("Throw Error: Driver doesn't exist", () => {
@@ -167,7 +215,13 @@ describe("CreateNewDriver", () => {
 
   it("Creates new driver", () => {
     CreateNewDriver("John", drivers);
-    expect(drivers).toStrictEqual([{ name: "John", trips: [] }]);
+    expect(drivers).toStrictEqual([
+      {
+        name: "John",
+        trips: [],
+        invalidTripCount: 0,
+      },
+    ]);
   });
 
   it("Throw Error: Driver Exists", () => {
@@ -175,6 +229,7 @@ describe("CreateNewDriver", () => {
       {
         name: "John",
         trips: [],
+        invalidTripCount: 0,
       },
     ];
 

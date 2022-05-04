@@ -1,19 +1,25 @@
 export type Driver = {
   name: string;
   trips: Trip[];
+  invalidTripCount: number;
 };
 
 export type Drivers = Driver[];
 
 export type DrivingReport = {
   name: string;
-  milesDrivenAvg: number;
+  milesDriven: number;
+  milesDrivenOnHighway: number;
   mphAvg: number;
-}[];
+  invalidTripCount: number;
+};
+
+export type DrivingReports = DrivingReport[];
 
 export type Trip = {
   milesDriven: number;
   mph: number;
+  onHighway: boolean;
 };
 
 export type TripToAdd = {

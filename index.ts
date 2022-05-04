@@ -1,5 +1,11 @@
 import { readFileSync } from "fs";
-import { Drivers, TripToAdd, Driver, DrivingReport } from "./types";
+import {
+  Drivers,
+  TripToAdd,
+  Driver,
+  DrivingReport,
+  DrivingReports,
+} from "./types";
 import { orderBy, round, sumBy } from "lodash";
 
 export const createDateObject = (dateString: string) => {
@@ -8,27 +14,52 @@ export const createDateObject = (dateString: string) => {
   return new Date(today.setHours(Number(hours), Number(minutes), 0, 0));
 };
 
-export function PrintReport(drivingReport: DrivingReport) {
-  orderBy(drivingReport, ["milesDrivenAvg"], ["desc"]).map(
-    ({ name, milesDrivenAvg, mphAvg }) => {
-      if (milesDrivenAvg === 0) {
-        console.log(`${name}: 0 miles`);
-      } else {
-        console.log(`${name}: ${milesDrivenAvg} miles @ ${mphAvg} mph`);
-      }
-    }
-  );
+export function PrintReport(
+  drivingReports: DrivingReports,
+  highwayReportFlag: boolean
+) {
+  orderBy(drivingReports, ["milesDrivenAvg"], ["desc"]).map((report) => {
+    console.log(CreatePrintReportMessage(report, highwayReportFlag));
+  });
+}
+
+export function CreatePrintReportMessage(
+  report: DrivingReport,
+  highwayReportFlag: boolean
+) {
+  const { name, milesDriven, mphAvg, milesDrivenOnHighway, invalidTripCount } =
+    report;
+  if (milesDriven === 0) {
+    return `${name}: 0 miles`;
+  } else {
+    const mainReportContent = `${name}: ${milesDriven} miles driven @ ${mphAvg} mph`;
+    const highwayReportContent = `percent on highway ${
+      (milesDrivenOnHighway / milesDriven) * 100
+    }%`;
+    const invalidReportContent = `Invalid trips ${invalidTripCount}`;
+
+    return `${mainReportContent} ${
+      highwayReportFlag ? highwayReportContent : invalidReportContent
+    }`;
+  }
 }
 
 export function CreateDrivingReport(drivers: Drivers) {
-  const drivingReport: DrivingReport = drivers.map(({ name, trips }) => ({
-    name,
-    milesDrivenAvg:
-      trips.length === 0
-        ? 0
-        : round(sumBy(trips, "milesDriven") / trips.length),
-    mphAvg: trips.length === 0 ? 0 : round(sumBy(trips, "mph") / trips.length),
-  }));
+  const drivingReport: DrivingReports = drivers.map(
+    ({ name, trips, invalidTripCount }) => ({
+      name,
+      milesDriven: trips.length === 0 ? 0 : round(sumBy(trips, "milesDriven")),
+      milesDrivenOnHighway: round(
+        sumBy(
+          trips.filter(({ onHighway }) => onHighway),
+          "milesDriven"
+        )
+      ),
+      invalidTripCount,
+      mphAvg:
+        trips.length === 0 ? 0 : round(sumBy(trips, "mph") / trips.length),
+    })
+  );
 
   return drivingReport;
 }
@@ -38,7 +69,12 @@ export function CreateNewDriver(driverName: string, drivers: Drivers) {
     throw new Error(`Driver ${driverName} already exists.`);
   }
 
-  drivers.push({ name: driverName, trips: [] });
+  drivers.push({
+    name: driverName,
+    trips: [],
+
+    invalidTripCount: 0,
+  });
 }
 
 export function AddTripToDriver(tripToAdd: TripToAdd, drivers: Drivers) {
@@ -55,9 +91,20 @@ export function AddTripToDriver(tripToAdd: TripToAdd, drivers: Drivers) {
   const timeDifference = stopTime.getTime() - startTime.getTime();
 
   const mph = milesDriven / (timeDifference / 1000 / 60 / 60);
+  const milesDrivenOnHighway = milesDriven / (timeDifference / 1000 / 60 / 60);
 
   if (mph > 5 || mph > 100) {
-    return drivers[driverIndex].trips.push({ milesDriven, mph });
+    const isOnHighway = mph >= 50;
+
+    return drivers[driverIndex].trips.push({
+      milesDriven,
+      mph,
+      onHighway: isOnHighway,
+    });
+  } else {
+    const { invalidTripCount, ...rest } = drivers[driverIndex];
+
+    drivers[driverIndex] = { ...rest, invalidTripCount: invalidTripCount + 1 };
   }
 }
 
@@ -120,6 +167,7 @@ export default function StartProgram() {
   }
 
   const inputFile = args[2];
+  const highwayFlag = args[3];
 
   if (inputFile !== "input.txt") {
     throw new Error("File isn't in the proper format.");
@@ -136,7 +184,7 @@ export default function StartProgram() {
 
     const driverList = CreateDriverList(data);
     const drivingReport = CreateDrivingReport(driverList);
-    PrintReport(drivingReport);
+    PrintReport(drivingReport, highwayFlag === "false");
   } catch (error) {
     console.log(error);
     throw error;
